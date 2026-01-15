@@ -1,0 +1,68 @@
+name: Mirror issues to private repo
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create mirrored issue in private repo
+        env:
+          GH_TOKEN: ${{ secrets.PRIVATE_REPO_ISSUES_TOKEN }}
+          PRIVATE_REPO: CarbonSolutions/carbon-explorer-platform
+          PUBLIC_REPO: ${{ github.repository }}
+          PUBLIC_ISSUE_NUMBER: ${{ github.event.issue.number }}
+          PUBLIC_ISSUE_TITLE: ${{ github.event.issue.title }}
+          PUBLIC_ISSUE_BODY: ${{ github.event.issue.body }}
+          PUBLIC_ISSUE_URL: ${{ github.event.issue.html_url }}
+          PUBLIC_ISSUE_USER: ${{ github.event.issue.user.login }}
+        run: |
+          set -euo pipefail
+
+          BODY=$(cat <<'EOF'
+          ## Mirrored from public bug reports
+
+          - Public issue: __PUBLIC_ISSUE_URL__
+          - Reporter: @__PUBLIC_ISSUE_USER__
+
+          ---
+
+          __PUBLIC_ISSUE_BODY__
+          EOF
+          )
+
+          BODY="${BODY/__PUBLIC_ISSUE_URL__/$PUBLIC_ISSUE_URL}"
+          BODY="${BODY/__PUBLIC_ISSUE_USER__/$PUBLIC_ISSUE_USER}"
+          BODY="${BODY/__PUBLIC_ISSUE_BODY__/$PUBLIC_ISSUE_BODY}"
+
+          RESPONSE=$(curl -sS -X POST \
+            -H "Authorization: token ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/${PRIVATE_REPO}/issues \
+            -d "$(jq -n \
+              --arg title "[Public Bug] ${PUBLIC_ISSUE_TITLE}" \
+              --arg body "$BODY" \
+              --argjson labels '["from-public-bugs","needs-triage"]' \
+              '{title: $title, body: $body, labels: $labels}'
+            )")
+
+          PRIVATE_URL=$(echo "$RESPONSE" | jq -r '.html_url // empty')
+          if [ -z "$PRIVATE_URL" ]; then
+            echo "Failed to create private issue. Response:"
+            echo "$RESPONSE"
+            exit 1
+          fi
+
+          echo "Created private issue: $PRIVATE_URL"
+
+          # Optional: comment back on the public issue (remove if you prefer)
+          curl -sS -X POST \
+            -H "Authorization: token ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/${PUBLIC_REPO}/issues/${PUBLIC_ISSUE_NUMBER}/comments \
+            -d "$(jq -n --arg body "Thanks! Logged internally: ${PRIVATE_URL}" '{body: $body}')"
