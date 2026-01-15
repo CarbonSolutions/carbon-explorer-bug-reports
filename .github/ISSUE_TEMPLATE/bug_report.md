@@ -1,11 +1,12 @@
 ---
 name: Bug report
 about: Report a bug in Carbon Explorer
-title: ''
-labels: ''
-assignees: ''
-
+title: "[Bug] "
+labels: ["needs-triage", "from-public-bugs"]
+assignees: ""
 ---
+
+## Bug Description
 
 **What happened?**
 <!-- Describe what happened when you encountered the bug -->
@@ -37,49 +38,30 @@ Please select the option that best describes the severity of this issue:
 
 ## Environment Information
 
-- **Browser:** ${env.browser}
-- **Operating System:** ${env.os}
-- **Screen Resolution:** ${env.screenResolution}
-- **Viewport Size:** ${env.viewportSize}
-- **URL:** ${env.url}
-- **App Version:** ${env.appVersion || 'Unknown'}
-- **Build ID / Commit:** ${env.buildId || 'Unknown'}
-- **Timestamp:** ${env.timestamp}
+<!--
+If you used the in-app "Report a bug" button, this section may already be filled in.
+Do not include secrets (API keys, tokens) or private customer data.
+-->
+
+- Browser:
+- Operating System:
+- Screen Resolution:
+- Viewport Size:
+- URL (no query params, no tokens):
+- App Version:
+- Build ID / Commit:
+- Timestamp:
 
 <details>
 <summary>User Agent (click to expand)</summary>
 
-\`\`\`
-${env.userAgent}
-\`\`\`
+
 
 </details>
 
-${
-  errorContext
-    ? `
 ---
 
-## Error Context
-
-- **Error Message:** ${errorContext.message}
-
-<details>
-<summary>Stack Trace</summary>
-
-\`\`\`
-${errorContext.stack}
-\`\`\`
-
-</details>
-`
-    : ''
-}
-
----
-
-## Screenshots / Console Errors
+## Screenshots / Console / Network Errors
 
 <!-- Paste any screenshots, console errors, or network errors below -->
 
-`;
